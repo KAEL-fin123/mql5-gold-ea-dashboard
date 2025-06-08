@@ -1,0 +1,155 @@
+**项目名称：**
+MQL5 GOLD EA 榜单看板（方案一 - 数据驱动型）
+
+**版本：** v0.2（PRD完善版）
+
+**文档说明：**
+本产品需求文档（PRD）基于方案一“数据驱动型首页”，目标是快速搭建一个展示多个黄金EA核心数据指标的网页看板。使用 Vercel 进行前端部署，Supabase 作为后端数据库，项目通过 Git + GitHub 版本管理。
+
+---
+
+### 一、产品目标
+
+打造一个实时更新的 MQL5 GOLD EA 榜单页，支持6种榜单（如胜率榜、回撤榜等），每个榜单支持展开详细查看该EA的年度与月度收益图表。产品适合推广和吸引EA用户聚集，可嵌入广告、用户反馈和合作入口。
+
+---
+
+### 二、目标用户
+
+* 使用MQL5黄金EA的交易者
+* 有兴趣比较EA绩效的潜在用户
+* EA策略开发者
+
+---
+
+### 三、核心功能模块
+
+#### 1. 首页（榜单展示页）
+
+* 顶栏：Logo + 页面标题 + \[商务合作] 按钮
+* 榜单区域：Tabs组件切换6种榜单
+
+  * 胜率榜、回撤榜、最大盈亏比榜、平均盈亏比榜、年化榜、本月收益榜
+  * 每个榜单展示：EA名称 / LOGO / 指标数据 / \[查看详情] 按钮
+* 对联广告位：支持图片链接跳转（固定高度）
+* 页脚：提交想看的EA数据建议（表单）
+
+#### 2. 弹窗：EA详情页
+
+* 年度图表：年化收益、最大回撤（柱状图）
+* 月度图表：年化收益、最大回撤（柱状图）
+* 简要介绍：EA概况/Logo
+
+#### 3. 数据提交页（简化表单）
+
+* 用户提交自己想看的EA名字/链接（写入Supabase）
+* 限制同一IP每日最多提交1次（基础防滥用）
+
+#### 4. 管理接口（管理员用）
+
+* 数据录入表单（用于添加新EA数据）
+* 广告配置入口（新增/启用/下线）
+* 排序逻辑配置说明（暂不开发UI，仅文档约定）
+
+---
+
+### 四、数据结构设计（完整版）
+
+**表1：eas（EA基础信息）**
+
+* id: UUID
+* name: TEXT
+* logo\_url: TEXT
+* description: TEXT
+
+**表2：ea\_stats（EA指标数据）**
+
+* id: UUID
+* ea\_id: FK -> eas.id
+* year: INT
+* month: INT
+* win\_rate: FLOAT
+* drawdown: FLOAT
+* avg\_risk\_reward: FLOAT
+* max\_risk\_reward: FLOAT
+* annual\_return: FLOAT
+* monthly\_return: FLOAT
+
+**表3：user\_requests（用户建议提交）**
+
+* id: UUID
+* ea\_name: TEXT
+* user\_ip: TEXT
+* submitted\_at: TIMESTAMP
+
+**表4：ads（广告配置）**
+
+* id: UUID
+* position: TEXT  -- 如 left, right, footer
+* image\_url: TEXT
+* link\_url: TEXT
+* is\_active: BOOLEAN
+* updated\_at: TIMESTAMP
+
+---
+
+### 五、技术栈
+
+| 组件    | 技术说明                         |
+| ----- | ---------------------------- |
+| 前端框架  | Next.js 14（App Router）       |
+| 样式系统  | Tailwind CSS + shadcn/ui     |
+| 状态管理  | React Hooks / TanStack Query |
+| 图表库   | Recharts（或 Chart.js）         |
+| 部署    | Vercel (自动部署)                |
+| 后端服务  | Supabase (PostgreSQL + API)  |
+| Git管理 | Git + GitHub（私有仓库）           |
+
+---
+
+### 六、开发计划（MVP）
+
+**第1阶段（Day 1-2）**：环境初始化
+
+* 创建 GitHub 仓库并连接 Vercel（Next.js 项目模板）
+* 初始化 Supabase 项目并导入数据结构 SQL
+
+**第2阶段（Day 3-6）**：核心页面开发
+
+* 首页榜单展示组件（含 Tabs 切换）
+* 接入 Supabase 拉取排序后的数据
+* Dummy 数据填充与 UI 验证
+
+**第3阶段（Day 7-8）**：表单 + 弹窗
+
+* 用户提交页 + Supabase 写入逻辑
+* EA详情弹窗（图表展示）
+* 管理端初版（添加数据、添加广告）
+
+**第4阶段（Day 9-10）**：打磨与发布
+
+* UI微调，广告图替换
+* SEO、移动端适配
+* 项目发布并写入 README
+
+---
+
+### 七、后续可拓展功能（V1.1）
+
+* EA搜索与筛选
+* 收藏功能（需登录）
+* 评论区（使用第三方如 Giscus）
+* 后台自动抓取 MQL5 数据脚本对接（计划由 Python 脚本 + Cron 处理）
+
+---
+
+### 八、备注说明
+
+* 所有EA数据初期均由你人工录入到Supabase，初期无需爬虫
+* 提交建议功能用作用户互动与需求收集，不做公开展示
+* 广告位支持动态热更新，未来可对接广告管理后台
+* 管理入口建议通过 secret hash 控制访问权限，如 `/admin?key=yourtoken`
+
+---
+
+如需我生成页面结构、样式代码、数据库SQL脚本或部署脚本，请随时提出下一步执行。
