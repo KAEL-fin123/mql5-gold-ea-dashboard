@@ -24,6 +24,37 @@ npm run db:test      # 测试数据库连接
 npm run type-check   # TypeScript检查
 ```
 
+## 🔌 API端点
+
+### EA数据API
+```bash
+GET /api/eas?sortBy={type}&year={year}&limit={limit}
+```
+
+**排序类型 (sortBy)**:
+- `win_rate` - 胜率榜
+- `drawdown` - 回撤榜
+- `max_risk_reward` - 最大盈亏比榜
+- `avg_risk_reward` - 平均盈亏比榜
+- `annual_return` - 年化收益榜
+- `monthly_return` - 月度收益榜
+
+**参数说明**:
+- `year`: 年份 (默认: 2024)
+- `month`: 月份 (可选，用于月度数据)
+- `limit`: 返回数量 (默认: 10)
+
+**示例请求**:
+```bash
+GET /api/eas?sortBy=win_rate&year=2024&limit=10
+GET /api/eas?sortBy=monthly_return&year=2024&month=12&limit=5
+```
+
+### 测试API
+```bash
+GET /api/test  # 简单的API连接测试
+```
+
 ## 📊 数据库配置
 
 ### 环境变量 (.env.local)
@@ -146,9 +177,15 @@ interface EAStats {
 ## 🔗 重要链接
 
 ### 开发环境
-- **本地开发**: http://localhost:3000
+- **本地开发**: http://localhost:3000 (或 http://localhost:3001)
+- **生产部署**: 🔄 Vercel自动部署 (GitHub集成)
 - **Supabase控制台**: https://supabase.com/dashboard/project/rllpuaybvztqqqhnvaok
 - **GitHub仓库**: https://github.com/KAEL-fin123/mql5-gold-ea-dashboard
+
+### 版本信息
+- **当前版本**: v0.2.0-phase2-complete
+- **最新提交**: Phase 2 完成 - EA榜单展示系统
+- **部署状态**: 自动部署已配置
 
 ### 文档资源
 - **Next.js文档**: https://nextjs.org/docs
