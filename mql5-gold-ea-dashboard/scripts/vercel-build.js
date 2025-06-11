@@ -1,17 +1,34 @@
 #!/usr/bin/env node
 
 /**
- * Vercel构建脚本
- * 确保路径解析和模块导入正确工作
+ * Vercel强制构建脚本
+ * 解决Babel/SWC冲突和模块解析问题
  */
 
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-console.log('🚀 开始Vercel构建过程...');
+console.log('🚀 开始强制Vercel构建过程...');
 
-// 1. 检查关键文件是否存在
+// 1. 强制删除所有可能的Babel配置文件
+console.log('🗑️ 清除所有Babel配置文件...');
+const babelFiles = [
+  '.babelrc',
+  '.babelrc.js',
+  '.babelrc.json',
+  'babel.config.js',
+  'babel.config.json'
+];
+
+babelFiles.forEach(file => {
+  if (fs.existsSync(file)) {
+    fs.unlinkSync(file);
+    console.log(`🗑️ 删除了 ${file}`);
+  }
+});
+
+// 2. 检查关键文件是否存在
 const criticalFiles = [
   'src/components/EACard.tsx',
   'src/lib/supabase.ts',
@@ -22,54 +39,69 @@ const criticalFiles = [
 
 console.log('📋 检查关键文件...');
 criticalFiles.forEach(file => {
+  const fullPath = path.resolve(file);
   if (fs.existsSync(file)) {
-    console.log(`✅ ${file} 存在`);
+    console.log(`✅ ${file} 存在 (${fullPath})`);
   } else {
-    console.error(`❌ ${file} 不存在`);
+    console.error(`❌ ${file} 不存在 (${fullPath})`);
     process.exit(1);
   }
 });
 
-// 2. 检查tsconfig.json路径别名配置
-console.log('🔧 检查TypeScript配置...');
+// 3. 验证路径别名配置
+console.log('🔧 验证路径别名配置...');
 const tsconfig = JSON.parse(fs.readFileSync('tsconfig.json', 'utf8'));
 if (tsconfig.compilerOptions && tsconfig.compilerOptions.paths && tsconfig.compilerOptions.paths['@/*']) {
-  console.log('✅ TypeScript路径别名配置正确');
+  console.log('✅ TypeScript路径别名配置正确:', tsconfig.compilerOptions.paths['@/*']);
 } else {
   console.error('❌ TypeScript路径别名配置缺失');
   process.exit(1);
 }
 
-// 3. 清理之前的构建
-console.log('🧹 清理之前的构建...');
-try {
-  if (fs.existsSync('.next')) {
-    execSync('rm -rf .next', { stdio: 'inherit' });
+// 4. 彻底清理构建缓存
+console.log('🧹 彻底清理构建缓存...');
+const cleanupPaths = ['.next', 'out', 'node_modules/.cache', '.vercel'];
+cleanupPaths.forEach(cleanPath => {
+  try {
+    if (fs.existsSync(cleanPath)) {
+      execSync(`rm -rf ${cleanPath}`, { stdio: 'inherit' });
+      console.log(`🧹 清理了 ${cleanPath}`);
+    }
+  } catch (error) {
+    console.log(`⚠️ 清理 ${cleanPath} 时出现警告:`, error.message);
   }
-  if (fs.existsSync('out')) {
-    execSync('rm -rf out', { stdio: 'inherit' });
-  }
-} catch (error) {
-  console.log('清理过程中的警告:', error.message);
-}
+});
 
-// 4. 运行类型检查
-console.log('🔍 运行类型检查...');
-try {
-  execSync('npx tsc --noEmit', { stdio: 'inherit' });
-  console.log('✅ 类型检查通过');
-} catch (error) {
-  console.log('⚠️ 类型检查有警告，但继续构建...');
-}
+// 5. 设置强制SWC环境变量
+process.env.NEXT_TELEMETRY_DISABLED = '1';
+process.env.DISABLE_BABEL = 'true';
+process.env.FORCE_SWC = 'true';
 
-// 5. 运行Next.js构建
+console.log('🔧 设置环境变量强制使用SWC...');
+console.log('   NEXT_TELEMETRY_DISABLED=1');
+console.log('   DISABLE_BABEL=true');
+console.log('   FORCE_SWC=true');
+
+// 6. 运行Next.js构建
 console.log('🏗️ 运行Next.js构建...');
 try {
-  execSync('next build', { stdio: 'inherit' });
+  execSync('next build', {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NEXT_TELEMETRY_DISABLED: '1',
+      DISABLE_BABEL: 'true',
+      FORCE_SWC: 'true'
+    }
+  });
   console.log('✅ Next.js构建成功');
 } catch (error) {
   console.error('❌ Next.js构建失败:', error.message);
+  console.error('构建环境信息:');
+  console.error('- Node.js版本:', process.version);
+  console.error('- 工作目录:', process.cwd());
+  console.error('- 环境变量:', Object.keys(process.env).filter(key => key.includes('NEXT') || key.includes('BABEL')));
   process.exit(1);
 }
 
-console.log('🎉 Vercel构建完成！');
+console.log('🎉 强制Vercel构建完成！');
