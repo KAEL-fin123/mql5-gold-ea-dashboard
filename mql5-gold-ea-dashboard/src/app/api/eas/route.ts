@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '../../../lib/supabase';
 
 // 创建Supabase客户端
 function createSupabaseClient() {

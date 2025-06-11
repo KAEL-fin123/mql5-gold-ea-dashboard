@@ -4,17 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/vercel-build.js",
-    "build:local": "node scripts/clean-babel.js && next build",
-    "build:vercel": "node scripts/vercel-build.js",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "db:setup": "echo '请在Supabase控制台执行database/schema.sql文件'",
     "db:test": "node scripts/test-db.js",
-    "type-check": "tsc --noEmit",
-    "clean": "node scripts/clean.js",
-    "clean:babel": "node scripts/clean-babel.js",
-    "postinstall": "node scripts/clean-babel.js"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

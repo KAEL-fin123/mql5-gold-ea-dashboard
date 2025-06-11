@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { TrendingUp, TrendingDown, Target, BarChart3, Calendar, DollarSign, RefreshCw } from 'lucide-react';
-import EACard, { EAData } from '@/components/EACard';
+import EACard, { EAData } from '../components/EACard';
 
 // 排行榜类型定义
 type RankingType = 'win_rate' | 'drawdown' | 'max_risk_reward' | 'avg_risk_reward' | 'annual_return' | 'monthly_return';
