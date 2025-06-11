@@ -11,20 +11,51 @@ const path = require('path');
 
 console.log('🚀 开始强制Vercel构建过程...');
 
-// 1. 强制删除所有可能的Babel配置文件
+// 1. 强制删除所有可能的Babel配置文件（包括隐藏文件）
 console.log('🗑️ 清除所有Babel配置文件...');
 const babelFiles = [
   '.babelrc',
   '.babelrc.js',
   '.babelrc.json',
   'babel.config.js',
-  'babel.config.json'
+  'babel.config.json',
+  '.babel.config.js',
+  '.babel.config.json'
 ];
 
+// 强制删除当前目录和所有子目录中的Babel文件
+function deleteBabelFilesRecursively(dir) {
+  try {
+    const files = fs.readdirSync(dir, { withFileTypes: true });
+    files.forEach(file => {
+      const fullPath = path.join(dir, file.name);
+      if (file.isDirectory() && file.name !== 'node_modules' && file.name !== '.git') {
+        deleteBabelFilesRecursively(fullPath);
+      } else if (babelFiles.includes(file.name)) {
+        try {
+          fs.unlinkSync(fullPath);
+          console.log(`🗑️ 删除了 ${fullPath}`);
+        } catch (e) {
+          console.log(`⚠️ 无法删除 ${fullPath}:`, e.message);
+        }
+      }
+    });
+  } catch (e) {
+    console.log(`⚠️ 扫描目录 ${dir} 时出错:`, e.message);
+  }
+}
+
+deleteBabelFilesRecursively('.');
+
+// 额外检查根目录
 babelFiles.forEach(file => {
   if (fs.existsSync(file)) {
-    fs.unlinkSync(file);
-    console.log(`🗑️ 删除了 ${file}`);
+    try {
+      fs.unlinkSync(file);
+      console.log(`🗑️ 删除了根目录的 ${file}`);
+    } catch (e) {
+      console.log(`⚠️ 无法删除根目录的 ${file}:`, e.message);
+    }
   }
 });
 
@@ -58,18 +89,26 @@ if (tsconfig.compilerOptions && tsconfig.compilerOptions.paths && tsconfig.compi
   process.exit(1);
 }
 
-// 4. 彻底清理构建缓存
+// 4. 彻底清理构建缓存（跨平台兼容）
 console.log('🧹 彻底清理构建缓存...');
 const cleanupPaths = ['.next', 'out', 'node_modules/.cache', '.vercel'];
-cleanupPaths.forEach(cleanPath => {
-  try {
-    if (fs.existsSync(cleanPath)) {
-      execSync(`rm -rf ${cleanPath}`, { stdio: 'inherit' });
-      console.log(`🧹 清理了 ${cleanPath}`);
+
+function deleteDirectory(dirPath) {
+  if (fs.existsSync(dirPath)) {
+    try {
+      fs.rmSync(dirPath, { recursive: true, force: true });
+      console.log(`🧹 清理了 ${dirPath}`);
+      return true;
+    } catch (error) {
+      console.log(`⚠️ 清理 ${dirPath} 时出现警告:`, error.message);
+      return false;
     }
-  } catch (error) {
-    console.log(`⚠️ 清理 ${cleanPath} 时出现警告:`, error.message);
   }
+  return false;
+}
+
+cleanupPaths.forEach(cleanPath => {
+  deleteDirectory(cleanPath);
 });
 
 // 5. 设置强制SWC环境变量
