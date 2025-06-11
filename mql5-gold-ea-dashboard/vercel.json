@@ -13,5 +13,5 @@
       "runtime": "nodejs18.x"
     }
   },
-  "regions": ["hkg1", "sin1", "nrt1"]
+  "regions": ["hkg1", "sin1"]
 }
