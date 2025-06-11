@@ -9,7 +9,9 @@
     "lint": "next lint",
     "db:setup": "echo '请在Supabase控制台执行database/schema.sql文件'",
     "db:test": "node scripts/test-db.js",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf .next out",
+    "postinstall": "npm run type-check"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
