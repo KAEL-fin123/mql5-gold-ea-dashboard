@@ -117,14 +117,22 @@ export default function EADetailModal({ ea, isOpen, onClose }: EADetailModalProp
           <div className="w-20 h-20 rounded-xl bg-slate-700 flex items-center justify-center flex-shrink-0">
             {ea.logo_url ? (
               <Image
-                src="/logos/placeholder.svg"
+                src={ea.logo_url}
                 alt={ea.name}
                 width={64}
                 height={64}
                 className="w-16 h-16 rounded-lg object-cover"
+                onError={(e) => {
+                  // 如果图片加载失败，显示默认图标
+                  e.currentTarget.style.display = 'none';
+                }}
               />
             ) : (
               <BarChart3 className="w-10 h-10 text-accent" />
+            )}
+            {/* 备用图标，当图片加载失败时显示 */}
+            {ea.logo_url && (
+              <BarChart3 className="w-10 h-10 text-accent hidden" />
             )}
           </div>
 

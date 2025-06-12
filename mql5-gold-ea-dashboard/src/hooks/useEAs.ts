@@ -36,7 +36,26 @@ async function fetchEAs(params: EAQueryParams): Promise<EAApiResponse> {
   
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+
+    // 根据状态码提供更友好的错误信息
+    let errorMessage = errorData.error;
+    if (!errorMessage) {
+      switch (response.status) {
+        case 404:
+          errorMessage = '请求的数据不存在，请检查筛选条件';
+          break;
+        case 500:
+          errorMessage = '服务器暂时无法处理请求，请稍后重试';
+          break;
+        case 503:
+          errorMessage = '服务暂时不可用，请稍后重试';
+          break;
+        default:
+          errorMessage = `网络请求失败 (${response.status})，请检查网络连接`;
+      }
+    }
+
+    throw new Error(errorMessage);
   }
 
   return response.json();
@@ -72,7 +91,26 @@ async function fetchAvailableTimeRanges() {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+
+    // 根据状态码提供更友好的错误信息
+    let errorMessage = errorData.error;
+    if (!errorMessage) {
+      switch (response.status) {
+        case 404:
+          errorMessage = '时间范围数据不存在';
+          break;
+        case 500:
+          errorMessage = '服务器暂时无法处理请求，请稍后重试';
+          break;
+        case 503:
+          errorMessage = '服务暂时不可用，请稍后重试';
+          break;
+        default:
+          errorMessage = `网络请求失败 (${response.status})，请检查网络连接`;
+      }
+    }
+
+    throw new Error(errorMessage);
   }
 
   return response.json();

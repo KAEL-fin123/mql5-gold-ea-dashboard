@@ -83,17 +83,22 @@ export default function EACard({ ea, rankingType, onClick }: EACardProps) {
           <div className="w-12 h-12 rounded-lg bg-slate-700 flex items-center justify-center">
             {ea.logo_url ? (
               <Image
-                src="/logos/placeholder.svg"
+                src={ea.logo_url}
                 alt={ea.name}
                 width={32}
                 height={32}
                 className="w-8 h-8 rounded object-cover"
-                onError={() => {
+                onError={(e) => {
                   // 如果图片加载失败，显示默认图标
+                  e.currentTarget.style.display = 'none';
                 }}
               />
             ) : (
               <BarChart3 className="w-6 h-6 text-green-500" />
+            )}
+            {/* 备用图标，当图片加载失败时显示 */}
+            {ea.logo_url && (
+              <BarChart3 className="w-6 h-6 text-green-500 hidden" />
             )}
           </div>
           

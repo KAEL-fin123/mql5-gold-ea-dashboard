@@ -174,7 +174,7 @@ export default function Home() {
               </div>
 
               {/* 控制按钮 */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 control-buttons">
                 <button
                   onClick={() => setIsSuggestionFormOpen(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"

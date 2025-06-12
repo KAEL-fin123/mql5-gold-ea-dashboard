@@ -85,11 +85,11 @@ CREATE TRIGGER update_ads_updated_at BEFORE UPDATE ON ads
 
 -- 插入示例数据
 INSERT INTO eas (name, logo_url, description) VALUES
-('Gold Scalper Pro', '/logos/gold-scalper-pro.png', '专业黄金剥头皮EA，适合短线交易'),
-('Golden Trend Master', '/logos/golden-trend-master.png', '黄金趋势跟踪EA，中长线策略'),
-('Gold Grid Expert', '/logos/gold-grid-expert.png', '网格交易策略，适合震荡行情'),
-('Smart Gold Trader', '/logos/smart-gold-trader.png', 'AI驱动的智能黄金交易系统'),
-('Gold Breakout Hunter', '/logos/gold-breakout-hunter.png', '突破策略专家，捕捉大行情')
+('Gold Scalper Pro', '/logos/gold-scalper-pro.svg', '专业黄金剥头皮EA，适合短线交易'),
+('Golden Trend Master', '/logos/golden-trend-master.svg', '黄金趋势跟踪EA，中长线策略'),
+('Gold Grid Expert', '/logos/gold-grid-expert.svg', '网格交易策略，适合震荡行情'),
+('Smart Gold Trader', '/logos/smart-gold-trader.svg', 'AI驱动的智能黄金交易系统'),
+('Gold Breakout Hunter', '/logos/gold-breakout-hunter.svg', '突破策略专家，捕捉大行情')
 ON CONFLICT (name) DO NOTHING;
 
 -- 插入示例统计数据 (2024年年度数据)

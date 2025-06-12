@@ -295,7 +295,19 @@
 
     /* 移动端排行榜标签 */
     .ranking-tab {
-      @apply px-3 py-2 text-sm;
+      @apply px-2 py-1.5 text-xs;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ranking-tab span {
+      @apply hidden;
+    }
+
+    .ranking-tab.active span {
+      @apply inline;
     }
 
     /* 移动端模态框 */
@@ -306,6 +318,20 @@
     /* 移动端图表容器 */
     .chart-container {
       @apply px-2;
+    }
+
+    /* 移动端头部标题 */
+    .gradient-text {
+      @apply text-2xl;
+    }
+
+    /* 移动端控制按钮 */
+    .control-buttons {
+      @apply flex-col gap-2;
+    }
+
+    .control-buttons button {
+      @apply w-full justify-center;
     }
   }
 
