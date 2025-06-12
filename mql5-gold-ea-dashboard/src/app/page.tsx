@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { TrendingUp, TrendingDown, Target, BarChart3, Calendar, DollarSign, RefreshCw } from 'lucide-react';
 import EACard, { EAData } from '../components/EACard';
+import EADetailModal from '../components/EADetailModal';
+import { useEAs } from '../hooks/useEAs';
+import { queryClient } from '../lib/query-client';
 
 // 排行榜类型定义
 type RankingType = 'win_rate' | 'drawdown' | 'max_risk_reward' | 'avg_risk_reward' | 'annual_return' | 'monthly_return';
@@ -55,48 +58,26 @@ const rankingTabs = [
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<RankingType>('win_rate');
-  const [eaData, setEaData] = useState<EAData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [year] = useState(2024);
   const [month] = useState<number | null>(null);
+  const [selectedEA, setSelectedEA] = useState<EAData | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  // 使用TanStack Query获取EA数据
+  const {
+    data: eaResponse,
+    isLoading: loading,
+    error,
+    refetch
+  } = useEAs({
+    sortBy: activeTab,
+    year,
+    month,
+    limit: 10
+  });
 
   // 获取EA数据
-  const fetchEAData = useCallback(async (sortBy: RankingType) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const params = new URLSearchParams({
-        sortBy,
-        year: year.toString(),
-        limit: '10'
-      });
-
-      if (month) {
-        params.append('month', month.toString());
-      }
-
-      const response = await fetch(`/api/eas?${params}`);
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || '获取数据失败');
-      }
-
-      setEaData(result.data || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '获取数据失败');
-      setEaData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [year, month]);
-
-  // 初始加载和标签切换时获取数据
-  useEffect(() => {
-    fetchEAData(activeTab);
-  }, [activeTab, year, month, fetchEAData]);
+  const eaData = eaResponse?.data || [];
 
   // 处理标签切换
   const handleTabChange = (tabId: RankingType) => {
@@ -105,7 +86,19 @@ export default function Home() {
 
   // 刷新数据
   const handleRefresh = () => {
-    fetchEAData(activeTab);
+    refetch();
+  };
+
+  // 处理EA卡片点击
+  const handleEAClick = (ea: EAData) => {
+    setSelectedEA(ea);
+    setIsDetailModalOpen(true);
+  };
+
+  // 关闭详情弹窗
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedEA(null);
   };
 
   return (
@@ -208,7 +201,9 @@ export default function Home() {
             <div className="text-center py-12">
               <div className="financial-card max-w-md mx-auto">
                 <div className="text-destructive mb-2">⚠️ 加载失败</div>
-                <p className="text-muted-foreground mb-4">{error}</p>
+                <p className="text-muted-foreground mb-4">
+                  {error instanceof Error ? error.message : '获取数据失败'}
+                </p>
                 <button
                   onClick={handleRefresh}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
@@ -235,12 +230,20 @@ export default function Home() {
                   key={ea.id}
                   ea={ea}
                   rankingType={activeTab}
+                  onClick={() => handleEAClick(ea)}
                 />
               ))}
             </div>
           )}
         </div>
       </main>
+
+      {/* EA详情弹窗 */}
+      <EADetailModal
+        ea={selectedEA}
+        isOpen={isDetailModalOpen}
+        onClose={handleCloseDetailModal}
+      />
 
       {/* 页脚 */}
       <footer className="border-t border-border bg-card/30 mt-16">

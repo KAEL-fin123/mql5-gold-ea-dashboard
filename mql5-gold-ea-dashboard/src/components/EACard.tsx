@@ -21,9 +21,10 @@ export interface EAData {
 interface EACardProps {
   ea: EAData;
   rankingType: string;
+  onClick?: () => void;
 }
 
-export default function EACard({ ea, rankingType }: EACardProps) {
+export default function EACard({ ea, rankingType, onClick }: EACardProps) {
   // 获取主要指标值
   const getPrimaryMetric = () => {
     switch (rankingType) {
@@ -71,7 +72,10 @@ export default function EACard({ ea, rankingType }: EACardProps) {
   const primaryMetric = getPrimaryMetric();
 
   return (
-    <div className="ea-card group">
+    <div
+      className="ea-card group cursor-pointer"
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between mb-4">
         {/* EA基本信息 */}
         <div className="flex items-center gap-3 flex-1">
