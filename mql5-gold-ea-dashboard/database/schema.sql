@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS ea_stats (
 CREATE TABLE IF NOT EXISTS user_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     ea_name TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    contact TEXT,
     user_ip TEXT NOT NULL,
     submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

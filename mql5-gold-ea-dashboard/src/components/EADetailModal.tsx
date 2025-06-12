@@ -1,18 +1,21 @@
 'use client';
 
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Target, 
-  BarChart3, 
-  Calendar, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Target,
+  BarChart3,
+  Calendar,
   DollarSign,
   Award,
   Activity,
-  Info
+  Info,
+  LineChart
 } from 'lucide-react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Modal from './ui/Modal';
+import EAChart from './EAChart';
 import { EAData } from './EACard';
 
 interface EADetailModalProps {
@@ -22,6 +25,8 @@ interface EADetailModalProps {
 }
 
 export default function EADetailModal({ ea, isOpen, onClose }: EADetailModalProps) {
+  const [activeChartTab, setActiveChartTab] = useState<'performance' | 'metrics' | 'comparison'>('performance');
+
   if (!ea) return null;
 
   // 获取指标颜色类
@@ -162,6 +167,44 @@ export default function EADetailModal({ ea, isOpen, onClose }: EADetailModalProp
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* 图表标签切换 */}
+        <div className="mb-6">
+          <h4 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <LineChart className="w-5 h-5" />
+            数据可视化
+          </h4>
+          <div className="flex gap-2 mb-4">
+            {[
+              { id: 'performance', label: '表现分析', icon: TrendingUp },
+              { id: 'metrics', label: '指标对比', icon: BarChart3 },
+              { id: 'comparison', label: '趋势分析', icon: Activity }
+            ].map((tab) => {
+              const IconComponent = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveChartTab(tab.id as any)}
+                  className={`
+                    flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
+                    ${activeChartTab === tab.id
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-secondary hover:bg-secondary/80 text-foreground'
+                    }
+                  `}
+                >
+                  <IconComponent className="w-4 h-4" />
+                  <span className="text-sm font-medium">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 图表容器 */}
+          <div className="bg-secondary/30 rounded-lg p-6">
+            <EAChart ea={ea} chartType={activeChartTab} />
           </div>
         </div>
 

@@ -292,5 +292,56 @@
     .financial-card {
       @apply p-4;
     }
+
+    /* 移动端排行榜标签 */
+    .ranking-tab {
+      @apply px-3 py-2 text-sm;
+    }
+
+    /* 移动端模态框 */
+    .modal-content {
+      @apply mx-2 max-h-[95vh];
+    }
+
+    /* 移动端图表容器 */
+    .chart-container {
+      @apply px-2;
+    }
+  }
+
+  @media (max-width: 640px) {
+    /* 超小屏幕优化 */
+    .gradient-text {
+      @apply text-2xl;
+    }
+
+    .ranking-tab {
+      @apply px-2 py-1.5 text-xs;
+    }
+
+    .ea-card {
+      @apply p-3;
+    }
+
+    .financial-card {
+      @apply p-3;
+    }
+  }
+
+  /* 触摸设备优化 */
+  @media (hover: none) and (pointer: coarse) {
+    .ea-card:hover {
+      transform: none;
+      box-shadow: none;
+    }
+
+    .ea-card:active {
+      transform: scale(0.98);
+      transition: transform 0.1s ease;
+    }
+
+    .ranking-tab:hover {
+      background-color: inherit;
+    }
   }
 }

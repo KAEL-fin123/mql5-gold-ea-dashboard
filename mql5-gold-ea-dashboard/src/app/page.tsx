@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { TrendingUp, TrendingDown, Target, BarChart3, Calendar, DollarSign, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, BarChart3, Calendar, DollarSign, RefreshCw, Plus } from 'lucide-react';
 import EACard, { EAData } from '../components/EACard';
 import EADetailModal from '../components/EADetailModal';
+import SuggestionForm from '../components/SuggestionForm';
 import { useEAs } from '../hooks/useEAs';
 import { queryClient } from '../lib/query-client';
 
@@ -62,6 +63,7 @@ export default function Home() {
   const [month] = useState<number | null>(null);
   const [selectedEA, setSelectedEA] = useState<EAData | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isSuggestionFormOpen, setIsSuggestionFormOpen] = useState(false);
 
   // 使用TanStack Query获取EA数据
   const {
@@ -174,6 +176,14 @@ export default function Home() {
               {/* 控制按钮 */}
               <div className="flex items-center gap-2">
                 <button
+                  onClick={() => setIsSuggestionFormOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                  title="建议添加EA"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden sm:inline">建议添加</span>
+                </button>
+                <button
                   onClick={handleRefresh}
                   disabled={loading}
                   className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors disabled:opacity-50"
@@ -243,6 +253,12 @@ export default function Home() {
         ea={selectedEA}
         isOpen={isDetailModalOpen}
         onClose={handleCloseDetailModal}
+      />
+
+      {/* 建议提交表单 */}
+      <SuggestionForm
+        isOpen={isSuggestionFormOpen}
+        onClose={() => setIsSuggestionFormOpen(false)}
       />
 
       {/* 页脚 */}
