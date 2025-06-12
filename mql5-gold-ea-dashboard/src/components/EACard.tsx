@@ -76,10 +76,10 @@ export default function EACard({ ea, rankingType, onClick }: EACardProps) {
       className="ea-card group cursor-pointer"
       onClick={onClick}
     >
-      <div className="flex items-start justify-between mb-4">
-        {/* EA基本信息 */}
+      {/* 头部：EA基本信息和排名 */}
+      <div className="flex items-start justify-between mb-6">
+        {/* EA Logo和名称 */}
         <div className="flex items-center gap-3 flex-1">
-          {/* EA Logo */}
           <div className="w-12 h-12 rounded-lg bg-slate-700 flex items-center justify-center">
             {ea.logo_url ? (
               <Image
@@ -89,29 +89,21 @@ export default function EACard({ ea, rankingType, onClick }: EACardProps) {
                 height={32}
                 className="w-8 h-8 rounded object-cover"
                 onError={(e) => {
-                  // 如果图片加载失败，显示默认图标
                   e.currentTarget.style.display = 'none';
                 }}
               />
             ) : (
-              <BarChart3 className="w-6 h-6 text-green-500" />
+              <BarChart3 className="w-6 h-6 text-accent" />
             )}
-            {/* 备用图标，当图片加载失败时显示 */}
             {ea.logo_url && (
-              <BarChart3 className="w-6 h-6 text-green-500 hidden" />
+              <BarChart3 className="w-6 h-6 text-accent hidden" />
             )}
           </div>
-          
-          {/* EA名称和描述 */}
+
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-foreground text-lg truncate">
               {ea.name}
             </h3>
-            {ea.description && (
-              <p className="text-muted-foreground text-sm line-clamp-2">
-                {ea.description}
-              </p>
-            )}
           </div>
         </div>
 
@@ -121,67 +113,23 @@ export default function EACard({ ea, rankingType, onClick }: EACardProps) {
         </div>
       </div>
 
-      {/* 主要指标展示 */}
-      <div className="mb-4">
-        <div className="text-center p-4 rounded-lg bg-secondary/30">
-          <div className="text-sm text-muted-foreground mb-1">
+      {/* 中心：主要指标大字显示 */}
+      <div className="flex-1 flex flex-col items-center justify-center py-8">
+        <div className="text-center">
+          <div className="text-sm text-muted-foreground mb-2 uppercase tracking-wide">
             {primaryMetric.label}
           </div>
-          <div className={`text-3xl font-bold ${getMetricColor(rankingType, primaryMetric.value)}`}>
-            {primaryMetric.value.toFixed(2)}{primaryMetric.unit}
+          <div className={`text-5xl font-bold mb-1 ${getMetricColor(rankingType, primaryMetric.value)}`}>
+            {primaryMetric.value.toFixed(rankingType.includes('risk_reward') ? 2 : 1)}
+          </div>
+          <div className={`text-2xl font-medium ${getMetricColor(rankingType, primaryMetric.value)}`}>
+            {primaryMetric.unit}
           </div>
         </div>
       </div>
 
-      {/* 详细指标网格 */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* 胜率 */}
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
-            <TrendingUp className="w-4 h-4 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">胜率</span>
-          </div>
-          <div className={`font-semibold ${getMetricColor('win_rate', ea.stats.win_rate)}`}>
-            {ea.stats.win_rate.toFixed(1)}%
-          </div>
-        </div>
-
-        {/* 最大回撤 */}
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
-            <TrendingDown className="w-4 h-4 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">回撤</span>
-          </div>
-          <div className={`font-semibold ${getMetricColor('drawdown', ea.stats.drawdown)}`}>
-            {ea.stats.drawdown.toFixed(1)}%
-          </div>
-        </div>
-
-        {/* 平均盈亏比 */}
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
-            <Target className="w-4 h-4 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">盈亏比</span>
-          </div>
-          <div className={`font-semibold ${getMetricColor('avg_risk_reward', ea.stats.avg_risk_reward)}`}>
-            {ea.stats.avg_risk_reward.toFixed(2)}
-          </div>
-        </div>
-
-        {/* 年化收益 */}
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
-            <Calendar className="w-4 h-4 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">年化</span>
-          </div>
-          <div className={`font-semibold ${getMetricColor('annual_return', ea.stats.annual_return)}`}>
-            {ea.stats.annual_return.toFixed(1)}%
-          </div>
-        </div>
-      </div>
-
-      {/* 悬停效果指示器 */}
-      <div className="mt-4 pt-3 border-t border-border/50">
+      {/* 底部：悬停提示 */}
+      <div className="mt-auto pt-4 border-t border-border/30">
         <div className="text-center text-xs text-muted-foreground group-hover:text-primary transition-colors">
           点击查看详细信息
         </div>

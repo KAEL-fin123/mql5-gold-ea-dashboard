@@ -47,12 +47,39 @@ export default function EAChart({ ea, chartType }: EAChartProps) {
     { name: '盈亏比', value: ea.stats.avg_risk_reward * 10, color: '#f59e0b' }, // 放大10倍便于显示
   ];
 
-  // 风险收益分布数据
-  const riskReturnData = [
-    { name: '低风险', value: 30, color: '#22c55e' },
-    { name: '中风险', value: 50, color: '#f59e0b' },
-    { name: '高风险', value: 20, color: '#ef4444' },
-  ];
+  // 基于EA实际数据计算风险分布
+  const calculateRiskDistribution = () => {
+    const drawdown = ea.stats.drawdown;
+    const winRate = ea.stats.win_rate;
+
+    // 基于回撤和胜率计算风险分布
+    let lowRisk, mediumRisk, highRisk;
+
+    if (drawdown < 10 && winRate > 70) {
+      // 低回撤高胜率 = 低风险为主
+      lowRisk = 60;
+      mediumRisk = 30;
+      highRisk = 10;
+    } else if (drawdown < 20 && winRate > 60) {
+      // 中等回撤中等胜率 = 中风险为主
+      lowRisk = 25;
+      mediumRisk = 55;
+      highRisk = 20;
+    } else {
+      // 高回撤或低胜率 = 高风险为主
+      lowRisk = 15;
+      mediumRisk = 35;
+      highRisk = 50;
+    }
+
+    return [
+      { name: '低风险', value: lowRisk, color: '#22c55e' },
+      { name: '中风险', value: mediumRisk, color: '#f59e0b' },
+      { name: '高风险', value: highRisk, color: '#ef4444' },
+    ];
+  };
+
+  const riskReturnData = calculateRiskDistribution();
 
   // 自定义Tooltip
   const CustomTooltip = ({ active, payload, label }: any) => {

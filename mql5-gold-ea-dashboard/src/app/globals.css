@@ -204,11 +204,26 @@
   /* EA排行榜卡片 */
   .ea-card {
     @apply bg-slate-900 border border-slate-700 rounded-lg p-6 hover:border-green-500 transition-all duration-300;
+    @apply flex flex-col;
+    min-height: 280px;
   }
 
   .ea-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgb(34 197 94 / 0.2);
+  }
+
+  /* 指标颜色类 */
+  .metric-positive {
+    @apply text-accent;
+  }
+
+  .metric-negative {
+    @apply text-destructive;
+  }
+
+  .metric-neutral {
+    @apply text-primary;
   }
 
   /* 排行榜标签 */
