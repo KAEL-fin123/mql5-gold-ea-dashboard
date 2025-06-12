@@ -111,14 +111,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 由于数据库表缺少reason和contact字段，暂时将信息合并到ea_name字段
+    const combinedInfo = `${data.eaName.trim()} | 理由: ${data.reason.trim()}${data.contact ? ` | 联系: ${data.contact.trim()}` : ''}`;
+
     // 插入建议记录
     const { error: insertError } = await supabase
       .from('user_requests')
       .insert({
-        ea_name: data.eaName.trim(),
+        ea_name: combinedInfo,
         user_ip: userIP,
-        reason: data.reason.trim(),
-        contact: data.contact?.trim() || null,
         submitted_at: new Date().toISOString()
       });
 

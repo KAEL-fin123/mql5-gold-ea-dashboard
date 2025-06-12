@@ -119,11 +119,8 @@ export default function EACard({ ea, rankingType, onClick }: EACardProps) {
           <div className="text-sm text-muted-foreground mb-2 uppercase tracking-wide">
             {primaryMetric.label}
           </div>
-          <div className={`text-5xl font-bold mb-1 ${getMetricColor(rankingType, primaryMetric.value)}`}>
-            {primaryMetric.value.toFixed(rankingType.includes('risk_reward') ? 2 : 1)}
-          </div>
-          <div className={`text-2xl font-medium ${getMetricColor(rankingType, primaryMetric.value)}`}>
-            {primaryMetric.unit}
+          <div className={`text-5xl font-bold ${getMetricColor(rankingType, primaryMetric.value)}`}>
+            {primaryMetric.value.toFixed(rankingType.includes('risk_reward') ? 2 : 1)}{primaryMetric.unit}
           </div>
         </div>
       </div>
