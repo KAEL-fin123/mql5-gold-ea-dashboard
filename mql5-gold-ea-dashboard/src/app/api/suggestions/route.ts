@@ -4,8 +4,12 @@ import { createIssueForSuggestion } from '../../../lib/mcp-client';
 
 // 创建Supabase客户端
 function createSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase configuration');
+  }
 
   return createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
@@ -79,6 +83,14 @@ function validateRequestData(data: any): { isValid: boolean; errors: string[] } 
 
 export async function POST(request: NextRequest) {
   try {
+    // 检查环境变量
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json(
+        { error: '服务配置错误' },
+        { status: 500 }
+      );
+    }
+
     // 解析请求数据
     const data = await request.json();
     
@@ -178,6 +190,14 @@ export async function POST(request: NextRequest) {
 // 获取建议统计信息（管理员用）
 export async function GET(request: NextRequest) {
   try {
+    // 检查环境变量
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json(
+        { error: '服务配置错误' },
+        { status: 500 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const adminKey = searchParams.get('admin_key');
 
