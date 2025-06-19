@@ -3,7 +3,7 @@
   command = "npm run build"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "18.18.0"
   NPM_VERSION = "9"
 
 # Next.js 函数配置
