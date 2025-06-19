@@ -1,6 +1,6 @@
 [build]
-  base = "mql5-gold-ea-dashboard"
   command = "npm run build"
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "18.18.0"
