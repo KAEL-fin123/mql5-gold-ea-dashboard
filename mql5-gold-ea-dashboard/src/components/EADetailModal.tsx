@@ -10,259 +10,229 @@ import {
   Award,
   Activity,
   Info,
-  LineChart
+  LineChart,
+  X
 } from 'lucide-react';
 import { useState } from 'react';
 import Image from 'next/image';
-import Modal from './ui/Modal';
-import EAChart from './EAChart';
 import { EAData } from './EACard';
 
 interface EADetailModalProps {
   ea: EAData | null;
   isOpen: boolean;
   onClose: () => void;
+  rankingType?: string;
 }
 
-export default function EADetailModal({ ea, isOpen, onClose }: EADetailModalProps) {
-  const [activeChartTab, setActiveChartTab] = useState<'performance' | 'metrics' | 'comparison'>('performance');
+export default function EADetailModal({ ea, isOpen, onClose, rankingType = 'win_rate' }: EADetailModalProps) {
+  const [activeTab, setActiveTab] = useState<'overview' | 'details'>('overview');
 
-  if (!ea) return null;
+  if (!ea || !isOpen) return null;
 
-  // 获取指标颜色类
-  const getMetricColor = (value: number, type: 'positive' | 'negative' | 'drawdown') => {
-    switch (type) {
-      case 'positive':
-        return value > 0 ? 'text-accent' : 'text-destructive';
-      case 'negative':
-        return value < 0 ? 'text-destructive' : 'text-accent';
+  // 获取主要指标（根据当前排名类型）
+  const getPrimaryMetric = () => {
+    switch (rankingType) {
+      case 'win_rate':
+        return { label: '胜率', value: ea.stats.win_rate, unit: '%' };
       case 'drawdown':
-        return value < 15 ? 'text-accent' : value < 25 ? 'text-primary' : 'text-destructive';
+        return { label: '最大回撤', value: ea.stats.drawdown, unit: '%' };
+      case 'max_risk_reward':
+        return { label: '最大盈亏比', value: ea.stats.max_risk_reward, unit: '' };
+      case 'avg_risk_reward':
+        return { label: '平均盈亏比', value: ea.stats.avg_risk_reward, unit: '' };
+      case 'annual_return':
+        return { label: '年化收益', value: ea.stats.annual_return, unit: '%' };
+      case 'monthly_return':
+        return { label: '月度收益', value: ea.stats.monthly_return, unit: '%' };
       default:
-        return 'text-foreground';
+        return { label: '胜率', value: ea.stats.win_rate, unit: '%' };
     }
   };
 
-  // 获取排名徽章颜色
+  const primaryMetric = getPrimaryMetric();
+
+  // 获取指标颜色类 - 适配主题
+  const getMetricColor = (value: number, type: 'positive' | 'negative' | 'drawdown') => {
+    // 统一原则：负数红色，正数绿色
+    if (value < 0) {
+      return 'text-red-600 dark:text-red-400';
+    } else if (value > 0) {
+      return 'text-green-600 dark:text-green-400';
+    } else {
+      return 'text-muted-foreground';
+    }
+  };
+
+  // 获取排名徽章颜色 - 适配主题
   const getRankBadgeColor = (rank: number) => {
-    if (rank === 1) return 'bg-primary text-background';
-    if (rank <= 3) return 'bg-accent text-background';
-    if (rank <= 5) return 'bg-secondary text-foreground';
-    return 'bg-muted text-muted-foreground';
+    if (rank === 1) return 'bg-yellow-500 text-black dark:bg-yellow-400 dark:text-black';
+    if (rank <= 3) return 'bg-gray-400 text-black dark:bg-gray-500 dark:text-white';
+    if (rank <= 5) return 'bg-orange-500 text-white dark:bg-orange-400 dark:text-black';
+    return 'bg-secondary text-secondary-foreground';
   };
 
-  // 指标数据
-  const metrics = [
-    {
-      icon: TrendingUp,
-      label: '胜率',
-      value: ea.stats.win_rate,
-      unit: '%',
-      color: getMetricColor(ea.stats.win_rate, 'positive'),
-      description: '交易成功的比例'
-    },
-    {
-      icon: TrendingDown,
-      label: '最大回撤',
-      value: ea.stats.drawdown,
-      unit: '%',
-      color: getMetricColor(ea.stats.drawdown, 'drawdown'),
-      description: '账户资金的最大损失幅度'
-    },
-    {
-      icon: Target,
-      label: '平均盈亏比',
-      value: ea.stats.avg_risk_reward,
-      unit: '',
-      color: getMetricColor(ea.stats.avg_risk_reward, 'positive'),
-      description: '平均盈利与平均亏损的比值'
-    },
-    {
-      icon: BarChart3,
-      label: '最大盈亏比',
-      value: ea.stats.max_risk_reward,
-      unit: '',
-      color: getMetricColor(ea.stats.max_risk_reward, 'positive'),
-      description: '单笔交易的最大盈亏比'
-    },
-    {
-      icon: Calendar,
-      label: '年化收益',
-      value: ea.stats.annual_return,
-      unit: '%',
-      color: getMetricColor(ea.stats.annual_return, 'positive'),
-      description: '年度投资回报率'
-    },
-    {
-      icon: DollarSign,
-      label: '月度收益',
-      value: ea.stats.monthly_return,
-      unit: '%',
-      color: getMetricColor(ea.stats.monthly_return, 'positive'),
-      description: '当月投资回报率'
-    }
-  ];
+
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      title={`${ea.name} - 详细信息`}
-      size="xl"
-    >
-      <div className="p-6">
-        {/* EA基本信息 */}
-        <div className="flex items-start gap-6 mb-8">
-          {/* EA Logo */}
-          <div className="w-20 h-20 rounded-xl bg-slate-700 flex items-center justify-center flex-shrink-0">
-            {ea.logo_url ? (
-              <Image
-                src={ea.logo_url}
-                alt={ea.name}
-                width={64}
-                height={64}
-                className="w-16 h-16 rounded-lg object-cover"
-                onError={(e) => {
-                  // 如果图片加载失败，显示默认图标
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            ) : (
-              <BarChart3 className="w-10 h-10 text-accent" />
-            )}
-            {/* 备用图标，当图片加载失败时显示 */}
-            {ea.logo_url && (
-              <BarChart3 className="w-10 h-10 text-accent hidden" />
-            )}
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* 背景遮罩 */}
+      <div
+        className="absolute inset-0 bg-black/70 dark:bg-black/80 backdrop-blur-sm"
+        onClick={onClose}
+      />
 
-          {/* EA信息 */}
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h3 className="text-2xl font-bold text-foreground">
+      {/* 模态框内容 */}
+      <div className="relative w-full max-w-2xl bg-background border border-border rounded-xl shadow-2xl max-h-[90vh] overflow-hidden">
+        {/* 头部 */}
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <div className="flex items-center gap-4">
+            {/* EA Logo */}
+            <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center">
+              {ea.logo_url ? (
+                <Image
+                  src={ea.logo_url}
+                  alt={ea.name}
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 rounded object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <BarChart3 className="w-6 h-6 text-primary" />
+              )}
+              {ea.logo_url && (
+                <BarChart3 className="w-6 h-6 text-primary hidden" />
+              )}
+            </div>
+
+            <div>
+              <h2 className="text-xl font-bold text-foreground">
                 {ea.name}
-              </h3>
-              <div className={`px-3 py-1 rounded-full text-sm font-bold ${getRankBadgeColor(ea.rank)}`}>
-                <Award className="w-4 h-4 inline mr-1" />
+              </h2>
+              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${getRankBadgeColor(ea.rank)}`}>
+                <Award className="w-3 h-3" />
                 #{ea.rank}
               </div>
             </div>
-            
+          </div>
+
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* 内容区域 */}
+        <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+          <div className="p-6">
+            {/* 描述 */}
             {ea.description && (
-              <p className="text-muted-foreground text-lg mb-4">
+              <p className="text-muted-foreground text-sm mb-6">
                 {ea.description}
               </p>
             )}
 
-            {/* 快速指标 */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-3 rounded-lg bg-secondary/30">
-                <div className="text-sm text-muted-foreground mb-1">胜率</div>
-                <div className={`text-xl font-bold ${getMetricColor(ea.stats.win_rate, 'positive')}`}>
-                  {ea.stats.win_rate.toFixed(1)}%
-                </div>
+            {/* 主要指标 - 大号居中显示 */}
+            <div className="text-center mb-8 py-8 bg-secondary/50 rounded-lg">
+              <div className="text-sm text-muted-foreground mb-2 uppercase tracking-wide">
+                {primaryMetric.label}
               </div>
-              <div className="text-center p-3 rounded-lg bg-secondary/30">
-                <div className="text-sm text-muted-foreground mb-1">年化收益</div>
-                <div className={`text-xl font-bold ${getMetricColor(ea.stats.annual_return, 'positive')}`}>
-                  {ea.stats.annual_return.toFixed(1)}%
-                </div>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-secondary/30">
-                <div className="text-sm text-muted-foreground mb-1">最大回撤</div>
-                <div className={`text-xl font-bold ${getMetricColor(ea.stats.drawdown, 'drawdown')}`}>
-                  {ea.stats.drawdown.toFixed(1)}%
-                </div>
+              <div className={`text-6xl font-bold ${getMetricColor(primaryMetric.value, rankingType === 'drawdown' ? 'drawdown' : 'positive')}`}>
+                {primaryMetric.value.toFixed(rankingType.includes('risk_reward') ? 2 : 1)}{primaryMetric.unit}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* 图表标签切换 */}
-        <div className="mb-6">
-          <h4 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <LineChart className="w-5 h-5" />
-            数据可视化
-          </h4>
-          <div className="flex gap-2 mb-4">
-            {[
-              { id: 'performance', label: '表现分析', icon: TrendingUp },
-              { id: 'metrics', label: '指标对比', icon: BarChart3 },
-              { id: 'comparison', label: '趋势分析', icon: Activity }
-            ].map((tab) => {
-              const IconComponent = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveChartTab(tab.id as any)}
-                  className={`
-                    flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200
-                    ${activeChartTab === tab.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary hover:bg-secondary/80 text-foreground'
-                    }
-                  `}
-                >
-                  <IconComponent className="w-4 h-4" />
-                  <span className="text-sm font-medium">{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
+            {/* 标签切换 */}
+            <div className="flex gap-2 mb-6">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'overview'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                }`}
+              >
+                概览
+              </button>
+              <button
+                onClick={() => setActiveTab('details')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'details'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                }`}
+              >
+                详细指标
+              </button>
+            </div>
 
-          {/* 图表容器 */}
-          <div className="bg-secondary/30 rounded-lg p-6">
-            <EAChart ea={ea} chartType={activeChartTab} />
-          </div>
-        </div>
-
-        {/* 详细指标网格 */}
-        <div className="mb-8">
-          <h4 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5" />
-            详细指标
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {metrics.map((metric, index) => {
-              const IconComponent = metric.icon;
-              return (
-                <div key={index} className="financial-card">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-2 rounded-lg bg-secondary">
-                      <IconComponent className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-foreground">
-                        {metric.label}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {metric.description}
-                      </div>
+            {/* 内容区域 */}
+            {activeTab === 'overview' ? (
+              <div className="space-y-6">
+                {/* 核心指标网格 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-secondary/50 rounded-lg p-4 text-center">
+                    <div className="text-xs text-muted-foreground mb-1">年化收益</div>
+                    <div className={`text-2xl font-bold ${getMetricColor(ea.stats.annual_return, 'positive')}`}>
+                      {ea.stats.annual_return.toFixed(1)}%
                     </div>
                   </div>
-                  <div className={`text-2xl font-bold ${metric.color}`}>
-                    {metric.value.toFixed(metric.unit === '' ? 2 : 1)}{metric.unit}
+                  <div className="bg-secondary/50 rounded-lg p-4 text-center">
+                    <div className="text-xs text-muted-foreground mb-1">最大回撤</div>
+                    <div className={`text-2xl font-bold ${getMetricColor(ea.stats.drawdown, 'drawdown')}`}>
+                      {ea.stats.drawdown.toFixed(1)}%
+                    </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* 风险提示 */}
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-            <div>
-              <h5 className="font-medium text-destructive mb-1">风险提示</h5>
-              <p className="text-sm text-muted-foreground">
-                以上数据仅供参考，过往表现不代表未来收益。外汇交易存在高风险，请谨慎投资，
-                确保您完全理解相关风险后再进行交易。建议在模拟环境中充分测试后再使用真实资金。
-              </p>
-            </div>
+                {/* 风险提示 */}
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <Info className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h5 className="font-medium text-destructive mb-1">风险提示</h5>
+                      <p className="text-sm text-muted-foreground">
+                        以上数据仅供参考，过往表现不代表未来收益。外汇交易存在高风险，请谨慎投资。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* 详细指标列表 - 显示所有6个核心指标 */}
+                {[
+                  { label: '胜率', value: ea.stats.win_rate, unit: '%', icon: Target, type: 'positive' as const },
+                  { label: '最大回撤', value: ea.stats.drawdown, unit: '%', icon: TrendingDown, type: 'drawdown' as const },
+                  { label: '平均盈亏比', value: ea.stats.avg_risk_reward, unit: '', icon: BarChart3, type: 'positive' as const },
+                  { label: '最大盈亏比', value: ea.stats.max_risk_reward, unit: '', icon: TrendingUp, type: 'positive' as const },
+                  { label: '年化收益', value: ea.stats.annual_return, unit: '%', icon: DollarSign, type: 'positive' as const },
+                  { label: '月度收益', value: ea.stats.monthly_return, unit: '%', icon: Calendar, type: 'positive' as const }
+                ].map((metric, index) => {
+                  const IconComponent = metric.icon;
+                  return (
+                    <div key={index} className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-secondary">
+                          <IconComponent className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <span className="text-foreground">{metric.label}</span>
+                      </div>
+                      <div className={`text-lg font-bold ${getMetricColor(metric.value, metric.type)}`}>
+                        {metric.value.toFixed(metric.unit === '' ? 2 : 1)}{metric.unit}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </Modal>
+    </div>
   );
 }

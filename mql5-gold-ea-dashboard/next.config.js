@@ -1,23 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 最小化配置，避免任何可能触发Babel的设置
   images: {
-    domains: ['localhost'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
-  },
-
-  // 构建配置
-  typescript: {
-    ignoreBuildErrors: true,
+    unoptimized: true,
+    domains: ['rllpuaybvztqqqhnvaok.supabase.co']
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true
   },
+  typescript: {
+    ignoreBuildErrors: true
+  },
+  experimental: {
+    cssChunking: 'strict'
+  }
 };
 
-module.exports = nextConfig;
+export default nextConfig;

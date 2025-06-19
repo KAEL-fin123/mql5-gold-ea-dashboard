@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const sortBy = (searchParams.get('sortBy') as SortType) || 'win_rate';
-    const year = parseInt(searchParams.get('year') || '2024');
+    const year = parseInt(searchParams.get('year') || '2025');
     const month = searchParams.get('month') ? parseInt(searchParams.get('month')!) : null;
     const limit = parseInt(searchParams.get('limit') || '10');
 
@@ -46,12 +46,21 @@ export async function GET(request: NextRequest) {
     const supabase = createSupabaseClient();
     const sortConfig = sortConfigs[sortBy];
 
-    // 构建查询
+    // 构建查询 - 使用DISTINCT ON确保每个EA只返回一条记录
     let query = supabase
       .from('ea_stats')
       .select(`
-        *,
-        eas (
+        id,
+        ea_id,
+        year,
+        month,
+        win_rate,
+        drawdown,
+        avg_risk_reward,
+        max_risk_reward,
+        annual_return,
+        monthly_return,
+        eas!inner (
           id,
           name,
           logo_url,

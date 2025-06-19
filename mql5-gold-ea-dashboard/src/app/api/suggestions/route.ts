@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '../../../lib/supabase';
+import { createIssueForSuggestion } from '../../../lib/mcp-client';
 
 // 创建Supabase客户端
 function createSupabaseClient() {
@@ -115,13 +116,14 @@ export async function POST(request: NextRequest) {
     const combinedInfo = `${data.eaName.trim()} | 理由: ${data.reason.trim()}${data.contact ? ` | 联系: ${data.contact.trim()}` : ''}`;
 
     // 插入建议记录
-    const { error: insertError } = await supabase
+    const { data: insertResult, error: insertError } = await supabase
       .from('user_requests')
       .insert({
         ea_name: combinedInfo,
         user_ip: userIP,
         submitted_at: new Date().toISOString()
-      });
+      })
+      .select();
 
     if (insertError) {
       console.error('插入建议记录错误:', insertError);
@@ -131,10 +133,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 尝试创建 GitHub Issue（不影响主要流程）
+    let githubIssueCreated = false;
+    try {
+      if (process.env.GITHUB_PERSONAL_ACCESS_TOKEN && process.env.GITHUB_OWNER && process.env.GITHUB_REPO) {
+        await createIssueForSuggestion({
+          ea_name: data.eaName,
+          reason: data.reason,
+          contact: data.contact
+        });
+        githubIssueCreated = true;
+        console.log('GitHub Issue 创建成功');
+      }
+    } catch (githubError) {
+      console.error('创建 GitHub Issue 失败:', githubError);
+      // 不影响主要流程，继续执行
+    }
+
     // 返回成功响应
     return NextResponse.json({
       success: true,
-      message: '建议提交成功，感谢您的反馈！'
+      message: '建议提交成功，感谢您的反馈！',
+      githubIssueCreated
     });
 
   } catch (error) {

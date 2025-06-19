@@ -73,14 +73,14 @@ export default function Modal({
       onClick={handleBackdropClick}
     >
       {/* 背景遮罩 */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm" />
       
       {/* 模态框内容 */}
       <div 
         ref={modalRef}
         className={`
           relative w-full ${getSizeClasses()} 
-          bg-card border border-border rounded-xl shadow-2xl
+          bg-background border border-border rounded-xl shadow-2xl
           max-h-[90vh] overflow-hidden
           animate-in fade-in-0 zoom-in-95 duration-200
         `}
@@ -93,7 +93,7 @@ export default function Modal({
             </h2>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-secondary transition-colors"
+              className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
               aria-label="关闭"
             >
               <X className="w-5 h-5" />
@@ -109,7 +109,7 @@ export default function Modal({
           {!title && (
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 z-10 p-2 rounded-lg hover:bg-secondary transition-colors"
+              className="absolute top-4 right-4 z-10 p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
               aria-label="关闭"
             >
               <X className="w-5 h-5" />
