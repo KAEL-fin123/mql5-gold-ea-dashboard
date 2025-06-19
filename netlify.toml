@@ -1,0 +1,22 @@
+[build]
+  base = "mql5-gold-ea-dashboard"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
+
+# Next.js 函数配置
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# API 路由重定向
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/___netlify-handler"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
