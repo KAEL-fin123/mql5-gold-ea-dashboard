@@ -3,8 +3,12 @@ import { createClient } from '../../../lib/supabase';
 
 // 创建Supabase客户端
 function createSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase configuration');
+  }
 
   return createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
@@ -29,6 +33,14 @@ const sortConfigs = {
 
 export async function GET(request: NextRequest) {
   try {
+    // 检查环境变量
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json(
+        { error: '服务配置错误' },
+        { status: 500 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const sortBy = (searchParams.get('sortBy') as SortType) || 'win_rate';
     const year = parseInt(searchParams.get('year') || '2025');
