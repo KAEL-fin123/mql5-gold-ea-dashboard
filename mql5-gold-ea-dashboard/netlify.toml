@@ -4,7 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "18.18.0"
-  NPM_VERSION = "9"
+  NPM_VERSION = "9.9.4"
 
 # Next.js 函数配置
 [[plugins]]
