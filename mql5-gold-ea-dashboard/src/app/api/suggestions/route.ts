@@ -29,56 +29,40 @@ function getClientIP(request: NextRequest): string {
     return forwarded.split(',')[0].trim();
   }
   
-  return realIP || remoteAddr || 'unknown';
+  if (realIP) {
+    return realIP;
+  }
+  
+  if (remoteAddr) {
+    return remoteAddr;
+  }
+  
+  return 'unknown';
 }
 
-// 检查IP限制（防止滥用）
-async function checkIPLimit(supabase: any, userIP: string): Promise<boolean> {
-  const oneDayAgo = new Date();
-  oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+// IP限制检查
+async function checkIPLimit(ip: string, supabase: any): Promise<boolean> {
+  try {
+    const oneHourAgo = new Date();
+    oneHourAgo.setHours(oneHourAgo.getHours() - 1);
 
-  const { data, error } = await supabase
-    .from('user_requests')
-    .select('id')
-    .eq('user_ip', userIP)
-    .gte('submitted_at', oneDayAgo.toISOString());
+    const { data, error } = await supabase
+      .from('user_requests')
+      .select('id')
+      .eq('ip_address', ip)
+      .gte('submitted_at', oneHourAgo.toISOString())
+      .limit(5);
 
-  if (error) {
-    console.error('检查IP限制错误:', error);
+    if (error) {
+      console.error('IP限制检查错误:', error);
+      return false;
+    }
+
+    return (data?.length || 0) < 5;
+  } catch (error) {
+    console.error('IP限制检查异常:', error);
     return false;
   }
-
-  // 每个IP每天最多提交5次
-  return (data?.length || 0) < 5;
-}
-
-// 验证请求数据
-function validateRequestData(data: any): { isValid: boolean; errors: string[] } {
-  const errors: string[] = [];
-
-  if (!data.eaName || typeof data.eaName !== 'string') {
-    errors.push('EA名称是必填项');
-  } else if (data.eaName.length < 2 || data.eaName.length > 100) {
-    errors.push('EA名称长度应在2-100个字符之间');
-  }
-
-  if (!data.reason || typeof data.reason !== 'string') {
-    errors.push('建议理由是必填项');
-  } else if (data.reason.length < 10 || data.reason.length > 500) {
-    errors.push('建议理由长度应在10-500个字符之间');
-  }
-
-  if (data.contact && typeof data.contact === 'string') {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(data.contact)) {
-      errors.push('请输入有效的邮箱地址');
-    }
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors
-  };
 }
 
 export async function POST(request: NextRequest) {
@@ -94,100 +78,77 @@ export async function POST(request: NextRequest) {
     // 解析请求数据
     const data = await request.json();
     
-    // 验证数据
-    const validation = validateRequestData(data);
-    if (!validation.isValid) {
+    // 验证必需字段
+    if (!data.ea_name || !data.reason) {
       return NextResponse.json(
-        { 
-          error: '数据验证失败', 
-          details: validation.errors 
-        },
+        { error: '请填写完整信息' },
         { status: 400 }
       );
     }
 
     // 获取客户端IP
-    const userIP = getClientIP(request);
+    const clientIP = getClientIP(request);
     
-    // 创建数据库连接
+    // 创建Supabase客户端
     const supabase = createSupabaseClient();
     
     // 检查IP限制
-    const canSubmit = await checkIPLimit(supabase, userIP);
+    const canSubmit = await checkIPLimit(clientIP, supabase);
     if (!canSubmit) {
       return NextResponse.json(
-        { 
-          error: '提交过于频繁，请24小时后再试',
-          code: 'RATE_LIMIT_EXCEEDED'
-        },
+        { error: '提交过于频繁，请稍后再试' },
         { status: 429 }
       );
     }
 
-    // 由于数据库表缺少reason和contact字段，暂时将信息合并到ea_name字段
-    const combinedInfo = `${data.eaName.trim()} | 理由: ${data.reason.trim()}${data.contact ? ` | 联系: ${data.contact.trim()}` : ''}`;
-
-    // 插入建议记录
-    const { data: insertResult, error: insertError } = await supabase
+    // 插入建议到数据库
+    const { data: insertData, error: insertError } = await supabase
       .from('user_requests')
       .insert({
-        ea_name: combinedInfo,
-        user_ip: userIP,
+        ea_name: data.ea_name,
+        reason: data.reason,
+        contact: data.contact || null,
+        ip_address: clientIP,
         submitted_at: new Date().toISOString()
       })
-      .select();
+      .select()
+      .single();
 
     if (insertError) {
-      console.error('插入建议记录错误:', insertError);
+      console.error('插入建议失败:', insertError);
       return NextResponse.json(
-        { error: '保存建议失败，请稍后重试' },
+        { error: '提交失败，请稍后重试' },
         { status: 500 }
       );
     }
 
-    // 尝试创建 GitHub Issue（不影响主要流程）
-    let githubIssueCreated = false;
+    // 尝试创建GitHub Issue（可选）
     try {
-      if (process.env.GITHUB_PERSONAL_ACCESS_TOKEN && process.env.GITHUB_OWNER && process.env.GITHUB_REPO) {
-        await createIssueForSuggestion({
-          ea_name: data.eaName,
-          reason: data.reason,
-          contact: data.contact
-        });
-        githubIssueCreated = true;
-        console.log('GitHub Issue 创建成功');
-      }
+      await createIssueForSuggestion({
+        ea_name: data.ea_name,
+        reason: data.reason,
+        contact: data.contact
+      });
     } catch (githubError) {
-      console.error('创建 GitHub Issue 失败:', githubError);
-      // 不影响主要流程，继续执行
+      console.error('创建GitHub Issue失败:', githubError);
+      // 不影响主要功能，继续执行
     }
 
-    // 返回成功响应
     return NextResponse.json({
       success: true,
-      message: '建议提交成功，感谢您的反馈！',
-      githubIssueCreated
+      message: '建议提交成功！感谢您的反馈。',
+      data: insertData
     });
 
   } catch (error) {
     console.error('建议提交API错误:', error);
-    
-    // 处理JSON解析错误
-    if (error instanceof SyntaxError) {
-      return NextResponse.json(
-        { error: '请求数据格式错误' },
-        { status: 400 }
-      );
-    }
-
     return NextResponse.json(
-      { error: '服务器内部错误，请稍后重试' },
+      { error: '服务器错误，请稍后重试' },
       { status: 500 }
     );
   }
 }
 
-// 获取建议统计信息（管理员用）
 export async function GET(request: NextRequest) {
   try {
     // 检查环境变量
@@ -219,9 +180,9 @@ export async function GET(request: NextRequest) {
       .limit(100);
 
     if (error) {
-      console.error('获取建议统计错误:', error);
+      console.error('获取建议失败:', error);
       return NextResponse.json(
-        { error: '获取数据失败' },
+        { error: '获取建议失败' },
         { status: 500 }
       );
     }
@@ -242,14 +203,15 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json({
+      success: true,
       suggestions: data,
       stats
     });
 
   } catch (error) {
-    console.error('获取建议统计API错误:', error);
+    console.error('获取建议统计失败:', error);
     return NextResponse.json(
-      { error: '服务器内部错误' },
+      { error: '获取统计信息失败' },
       { status: 500 }
     );
   }
